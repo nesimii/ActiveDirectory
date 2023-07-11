@@ -16,49 +16,77 @@ namespace ActiveDirectoryScanner.database
             _graphClient = new BoltGraphClient(this.uri, this.user, this.password);
             _graphClient.ConnectAsync().Wait();
         }
-        public async void saveComputer(Computer computer, List<string> groupIds)
+        public void saveComputer(Computer computer, List<string> groupObjectSids)
         {
             //objectId ile sorgular, kayıt yoksa kayıt eder.
-            await _graphClient.Cypher
-                .Merge("(computer:Computer {objectId: $id})")
+            _graphClient.Cypher
+                .Merge("(computer:Computer {objectSid: $id})")
                 .OnCreate()
                 .Set("computer = $newComputer")
                 .WithParams(new
                 {
-                    id = computer.objectId,
+                    id = computer.objectSid,
                     newComputer = computer
                 })
-                .ExecuteWithoutResultsAsync();
+                .ExecuteWithoutResultsAsync().Wait();
+
+            //computer' ın bağlı olduğu gruplar varsa relation oluşturulur.
+            if (groupObjectSids.Count > 0)
+            {
+                foreach (string groupObjectSid in groupObjectSids)
+                {
+                    _graphClient.Cypher
+                        .Match("(c:Computer)", "(g:Group)")
+                        .Where((Computer c) => c.objectSid == computer.objectSid)
+                        .AndWhere((Group g) => g.objectSid == groupObjectSid)
+                        .Merge("(c)-[:MEMBER_OF]->(g)")
+                        .ExecuteWithoutResultsAsync().Wait();
+                }
+            }
         }
 
-        public async void saveGroup(Group group)
+        public void saveGroup(Group group)
         {
             //objectId ile sorgular, kayıt yoksa kayıt eder.
-            await _graphClient.Cypher
-                .Merge("(group:Group {objectId: $id})")
+            _graphClient.Cypher
+                .Merge("(group:Group {objectSid: $id})")
                 .OnCreate()
                 .Set("group = $newGroup")
                 .WithParams(new
                 {
-                    id = group.objectId,
+                    id = group.objectSid,
                     newGroup = group
                 })
-                .ExecuteWithoutResultsAsync();
+                .ExecuteWithoutResultsAsync().Wait();
         }
 
-        public async void SaveUser(User newUser, List<string> groupIds)
+        public void SaveUser(User user, List<string> groupObjectSids)
         {
             //objectId ile sorgular, kayıt yoksa kayıt eder.
-            await _graphClient.Cypher
-                .Merge("(user:User {objectId: $id})")
+            _graphClient.Cypher
+                .Merge("(user:User {objectSid: $id})")
                 .OnCreate()
                 .Set("user = $newUser")
                 .WithParams(new
                 {
-                    id = newUser.objectId,
-                    newUser
+                    id = user.objectSid,
+                    newUser = user
                 })
-                .ExecuteWithoutResultsAsync();
+                .ExecuteWithoutResultsAsync().Wait();
+
+            //user' ın bağlı olduğu gruplar varsa relation oluşturulur.
+            if (groupObjectSids.Count > 0)
+            {
+                foreach (string groupObjectSid in groupObjectSids)
+                {
+                    _graphClient.Cypher
+                        .Match("(u:User)", "(g:Group)")
+                        .Where((User u) => u.objectSid == user.objectSid)
+                        .AndWhere((Group g) => g.objectSid == groupObjectSid)
+                        .Merge("(u)-[:MEMBER_OF]->(g)")
+                        .ExecuteWithoutResultsAsync().Wait();
+                }
+            }
         }
     }
 }

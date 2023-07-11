@@ -17,14 +17,14 @@ namespace ActiveDirectoryScanner.database
         }
 
 
-        public async void SaveUser(User user, List<string> groupObjectId)
+        public async void SaveUser(User user, List<string> groupObjectSids)
         {
             using (var session = _driver.AsyncSession())
             {
                 string query = @"
-                CREATE (u:user 
+                CREATE (u:User 
                 {
-                    objectId: $objectId,
+                    objectSid: $objectSid,
                     distinguishedName: $distinguishedName,
                     whenCreated: datetime($whenCreated),
                     pwdLastSet: datetime($pwdLastSet),
@@ -35,7 +35,7 @@ namespace ActiveDirectoryScanner.database
                 })";
                 object parameters = new
                 {
-                    objectId = user.objectId,
+                    objectSid = user.objectSid,
                     distinguishedName = user.distinguishedName,
                     whenCreated = user.whenCreated.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
                     pwdLastSet = user.pwdLastSet.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
@@ -45,14 +45,14 @@ namespace ActiveDirectoryScanner.database
                     writeDacl = user.writeDacl
                 };
 
-                if (user.groupObjectIds.Count > 0)
+                if (groupObjectSids.Count > 0)
                 {
                     string groupMatches = "MATCH";
                     string createRelations = "CREATE";
-                    for (int i = 0; i < user.groupObjectIds.Count; i++)
+                    for (int i = 0; i < groupObjectSids.Count; i++)
                     {
-                        groupMatches += $"(g{i}:group {{objectId: '{user.groupObjectIds[i]}'}}),";
-                        createRelations += $"(u)-[:BELONGS_TO]->(g{i}),";
+                        groupMatches += $"(g{i}:Group {{objectSid: '{groupObjectSids[i]}'}}),";
+                        createRelations += $"(u)-[:MEMBER_OF]->(g{i}),";
                     }
                     string newgroupMatches = groupMatches.Substring(0, groupMatches.Length - 1);
                     string newcreateRelations = createRelations.Substring(0, createRelations.Length - 1);
@@ -72,13 +72,13 @@ namespace ActiveDirectoryScanner.database
             }
         }
 
-        public async void saveComputer(Computer computer, List<string> groupObjectIds)
+        public async void saveComputer(Computer computer, List<string> groupObjectSids)
         {
             using (var session = _driver.AsyncSession())
             {
                 var query = @"
-            CREATE (c:computer {
-                objectId: $objectId,
+            CREATE (c:Computer {
+                objectSid: $objectSid,
                 distinguishedName: $distinguishedName,
                 operatingSystem: $operatingSystem,
                 whenCreated: datetime($whenCreated),
@@ -87,21 +87,21 @@ namespace ActiveDirectoryScanner.database
 
                 var parameters = new
                 {
-                    objectId = computer.objectId,
+                    objectSid = computer.objectSid,
                     distinguishedName = computer.distinguishedName,
                     operatingSystem = computer.OperatingSystem,
                     whenCreated = computer.whenCreated.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
                     securityDescriptor = computer.securityDescriptor
                 };
 
-                if (computer.groupObjectIds.Count > 0)
+                if (groupObjectSids.Count > 0)
                 {
                     string groupMatches = "MATCH";
                     string createRelations = "CREATE";
-                    for (int i = 0; i < computer.groupObjectIds.Count; i++)
+                    for (int i = 0; i < groupObjectSids.Count; i++)
                     {
-                        groupMatches += $"(g{i}:group {{objectId: '{computer.groupObjectIds[i]}'}}),";
-                        createRelations += $"(c)-[:BELONGS_TO]->(g{i}),";
+                        groupMatches += $"(g{i}:Group {{objectSid: '{groupObjectSids[i]}'}}),";
+                        createRelations += $"(c)-[:MEMBER_OF]->(g{i}),";
                     }
                     string newgroupMatches = groupMatches.Substring(0, groupMatches.Length - 1);
                     string newcreateRelations = createRelations.Substring(0, createRelations.Length - 1);
@@ -126,8 +126,8 @@ namespace ActiveDirectoryScanner.database
             using (var session = _driver.AsyncSession())
             {
                 var query = @"
-            CREATE (g:group {
-                objectId: $objectId,
+            CREATE (g:Group {
+                objectSid: $objectSid,
                 distinguishedName: $distinguishedName,
                 description: $description,
                 whenCreated: datetime($whenCreated),
@@ -138,7 +138,7 @@ namespace ActiveDirectoryScanner.database
 
                 var parameters = new
                 {
-                    objectId = group.objectId,
+                    objectSid = group.objectSid,
                     distinguishedName = group.distinguishedName,
                     description = group.description,
                     whenCreated = group.whenCreated.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
@@ -168,7 +168,7 @@ namespace ActiveDirectoryScanner.database
                 {
                     foreach (var group_Id in list)
                     {
-                        var relationQuery = $"MATCH (i:{type} {{objectId: $objectId}}), (g:group {{objectId: $groupId}}) CREATE (i)-[:BELONGS_TO]->(g)";
+                        var relationQuery = $"MATCH (i:{type} {{objectId: $objectId}}), (g:Group {{objectSid: $groupId}}) CREATE (i)-[:MEMBER_OF]->(g)";
 
                         var relationParameters = new
                         {

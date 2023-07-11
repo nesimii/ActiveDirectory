@@ -1,5 +1,7 @@
 ﻿using ActiveDirectoryScanner.activeDirectory.interfaces;
 using ActiveDirectoryScanner.activeDirectory;
+using System.DirectoryServices;
+using System.Runtime.InteropServices;
 using ActiveDirectoryScanner.database;
 using ActiveDirectoryScanner.items;
 using ActiveDirectoryScanner.database.interfaces;
@@ -8,11 +10,21 @@ Console.WriteLine("Forestall AD Scanner\n");
 
 //eski yapı
 {
-    IActiveDirectory activeDirectory = new ActiveDirectory("LDAP://nesimi.local", "Administrator", "admin_123");
+    string uri = "LDAP://" + GetValue("LDAP uri: ");
+    string user = GetValue("username: ");
+    string pass = GetValue("password: ");
 
-    activeDirectory.getGroups();
-    activeDirectory.getUsers();
-    activeDirectory.getComputers();
+    try
+    {
+        IActiveDirectory activeDirectory = new ActiveDirectory(uri, user, pass);
+
+        //İlk gruplar taranıyor. Gruplar kaydedilince, userlar ve computerlar kaydedilirken relation kuruluyor.
+        activeDirectory.getGroups();
+        activeDirectory.getUsers();
+        activeDirectory.getComputers();
+    }
+    catch (DirectoryServicesCOMException) { Console.WriteLine("kullanıcı adı veya parola hatalı.."); }
+    catch (COMException) { Console.WriteLine("sunucu bulunamadı.."); }
 }
 
 //test kayıt yapısı
@@ -37,5 +49,9 @@ Console.WriteLine("Forestall AD Scanner\n");
 //}
 Console.WriteLine("\nAd scanner is done...");
 
-Console.WriteLine("press any key for close this window");
-Console.ReadLine();
+string GetValue(string message)
+{
+    string input;
+    do { Console.Write(message); input = Console.ReadLine(); } while (string.IsNullOrWhiteSpace(input));
+    return input;
+}

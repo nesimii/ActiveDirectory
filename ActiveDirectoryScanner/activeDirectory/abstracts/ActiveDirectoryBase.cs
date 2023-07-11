@@ -21,7 +21,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
             this.username = username;
             this.password = password;
             entry = new DirectoryEntry(domainPath, username, password);
-            database = new MyNeo4j();
+            database = new MyNeo4jClient();
         }
         public void searchUsers()
         {
@@ -64,8 +64,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                     bool hasWriteDacl = CheckPermission(userResult.GetDirectoryEntry(), ActiveDirectoryRights.WriteDacl);
 
                     User user = new User();
-                    user.groupObjectIds = new List<string>();
-                    user.objectId = objectId;
+                    user.objectSid = objectId;
                     user.distinguishedName = distinguishedName;
                     user.whenCreated = whenCreatedUtc;
                     user.pwdLastSet = pwdLastSetUtc;
@@ -84,7 +83,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                     Console.WriteLine("hasGenericAll: " + hasGenericAll);
                     Console.WriteLine("hasWriteDacl: " + hasWriteDacl);
 
-                    List<string> groupObjectIds = new List<string>();
+                    List<string> groupObjectSids = new List<string>();
                     if (userResult.Properties.Contains("memberOf"))
                     {
                         foreach (string groupName in userResult.Properties["memberOf"])
@@ -92,20 +91,20 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                             // get group objectId
                             DirectorySearcher groupSearcher = new DirectorySearcher(entry);
                             groupSearcher.Filter = $"(distinguishedName={groupName})";
-                            groupSearcher.PropertiesToLoad.Add("objectSid"); // assuming objectGUID is what you mean by objectId
+                            groupSearcher.PropertiesToLoad.Add("objectSid");
 
                             SearchResult groupResult = groupSearcher.FindOne();
                             if (groupResult != null)
                             {
-                                string groupObjectId = new SecurityIdentifier((byte[])groupResult.Properties["objectSid"][0], 0).ToString().Trim();
-                                Console.WriteLine($"member of: {groupName}\t id:{groupObjectId}");
-                                if (!groupObjectId.Equals(null)) user.groupObjectIds.Add(groupObjectId);
+                                string groupObjectSid = new SecurityIdentifier((byte[])groupResult.Properties["objectSid"][0], 0).ToString().Trim();
+                                Console.WriteLine($"member of: {groupName}\t id:{groupObjectSid}");
+                                if (!groupObjectSid.Equals(null)) groupObjectSids.Add(groupObjectSid);
                             }
                         }
                     }
                     Console.WriteLine("-----------------------------------------");
                     Console.WriteLine();
-                    database.SaveUser(user, groupObjectIds);
+                    database.SaveUser(user, groupObjectSids);
                 }
             }
             catch (Exception ex)
@@ -140,8 +139,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                 DateTime whenCreatedLocal = convertLocalTime(whenCreatedUtc);
 
                 Computer computer = new Computer();
-                computer.groupObjectIds = new List<string>();
-                computer.objectId = objectId;
+                computer.objectSid = objectId;
                 computer.distinguishedName = distinguishedName;
                 computer.OperatingSystem = OperatingSystem;
                 computer.securityDescriptor = securityDescriptorString;
@@ -153,7 +151,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                 Console.WriteLine("whenCreated: " + whenCreatedUtc);
                 Console.WriteLine("nTSecurityDescriptor: " + securityDescriptorString);
 
-                List<string> groupObjectIds = new List<string>();
+                List<string> groupObjectSids = new List<string>();
                 if (computerResult.Properties.Contains("memberOf"))
                 {
                     foreach (string groupName in computerResult.Properties["memberOf"])
@@ -166,13 +164,13 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                         SearchResult groupResult = groupSearcher.FindOne();
                         if (groupResult != null)
                         {
-                            string groupObjectId = new SecurityIdentifier((byte[])groupResult.Properties["objectSid"][0], 0).ToString().Trim();
-                            Console.WriteLine($"member of: {groupName}\t id:{groupObjectId}");
-                            if (!groupObjectId.Equals(null)) computer.groupObjectIds.Add(groupObjectId);
+                            string groupObjectSid = new SecurityIdentifier((byte[])groupResult.Properties["objectSid"][0], 0).ToString().Trim();
+                            Console.WriteLine($"member of: {groupName}\t id:{groupObjectSid}");
+                            if (!groupObjectSid.Equals(null)) groupObjectSids.Add(groupObjectSid);
                         }
                     }
                 }
-                database.saveComputer(computer, groupObjectIds);
+                database.saveComputer(computer, groupObjectSids);
                 Console.WriteLine("-----------------------------------------");
                 Console.WriteLine();
             }
@@ -204,7 +202,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                 bool hasWriteDacl = CheckPermission(groupResult.GetDirectoryEntry(), ActiveDirectoryRights.WriteDacl);
 
                 Group group = new Group();
-                group.objectId = objectId;
+                group.objectSid = objectId;
                 group.distinguishedName = distinguishedName;
                 group.description = description;
                 group.securityDescriptor = securityDescriptorString;
@@ -241,7 +239,6 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                     return true;
                 }
             }
-
             return false;
         }
     }
