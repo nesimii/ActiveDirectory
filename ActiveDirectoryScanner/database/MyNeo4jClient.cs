@@ -6,15 +6,22 @@ namespace ActiveDirectoryScanner.database
 {
     public class MyNeo4jClient : IDatabase
     {
+        private static MyNeo4jClient myNeo4JClient;
         private readonly IGraphClient _graphClient;
         private readonly string uri = "bolt://localhost:7687";
         private readonly string user = "neo4j";
         private readonly string password = "password";
 
-        public MyNeo4jClient()
+        private MyNeo4jClient()
         {
             _graphClient = new BoltGraphClient(this.uri, this.user, this.password);
             _graphClient.ConnectAsync().Wait();
+        }
+        //singleton design
+        public static MyNeo4jClient getmyNeo4JClient()
+        {
+            if (myNeo4JClient == null) myNeo4JClient = new MyNeo4jClient();
+            return myNeo4JClient;
         }
         public void saveComputer(Computer computer, List<string> groupObjectSids)
         {

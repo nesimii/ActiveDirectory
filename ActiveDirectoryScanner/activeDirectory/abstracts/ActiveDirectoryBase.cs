@@ -15,14 +15,15 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
         private DirectoryEntry entry;
         private IDatabase database;
 
-        public ActiveDirectoryBase(string domainPath, string username, string password)
+        protected ActiveDirectoryBase(string domainPath, string username, string password, Object db)
         {
             this.domainPath = domainPath;
             this.username = username;
             this.password = password;
             entry = new DirectoryEntry(domainPath, username, password);
-            database = new MyNeo4jClient();
+            database = (IDatabase)db;
         }
+
         public void searchUsers()
         {
             // Kullanıcılar
@@ -83,6 +84,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                     Console.WriteLine("hasGenericAll: " + hasGenericAll);
                     Console.WriteLine("hasWriteDacl: " + hasWriteDacl);
 
+                    //kullanıcıların bağlı olduğu gruplar taranıyor.
                     List<string> groupObjectSids = new List<string>();
                     if (userResult.Properties.Contains("memberOf"))
                     {
@@ -151,6 +153,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                 Console.WriteLine("whenCreated: " + whenCreatedUtc);
                 Console.WriteLine("nTSecurityDescriptor: " + securityDescriptorString);
 
+                //computerların bağlı olduğu gruplar taranıyor.
                 List<string> groupObjectSids = new List<string>();
                 if (computerResult.Properties.Contains("memberOf"))
                 {
@@ -198,6 +201,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                 DateTime whenCreatedUtc = (DateTime)groupResult.Properties["whenCreated"][0];
                 DateTime whenCreatedLocal = convertLocalTime(whenCreatedUtc);
 
+                //checkPermission fonk. da yetki kontrolü tanım çalışmıyor.
                 bool hasGenericAll = CheckPermission(groupResult.GetDirectoryEntry(), ActiveDirectoryRights.GenericAll);
                 bool hasWriteDacl = CheckPermission(groupResult.GetDirectoryEntry(), ActiveDirectoryRights.WriteDacl);
 
@@ -229,6 +233,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
         }
         private bool CheckPermission(DirectoryEntry entry, ActiveDirectoryRights right)
         {
+            //bu bölümü tam çözemedim.
             ActiveDirectorySecurity securityDescriptor = entry.ObjectSecurity;
             AuthorizationRuleCollection rules = securityDescriptor.GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier));
 

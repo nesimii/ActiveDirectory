@@ -10,10 +10,11 @@ namespace ActiveDirectoryScanner.activeDirectory
 {
     public class ActiveDirectory : ActiveDirectoryBase, IActiveDirectory
     {
-        public ActiveDirectory(string domainPath, string username, string password) : base(domainPath, username, password)
+        public ActiveDirectory(string domainPath, string username, string password, Object db)
+            : base(domainPath, username, password, db)
         {
         }
-
+        //abstract da tanımlı fonk istek atıyor
         public void getUsers() => searchUsers();
         public void getComputers() => searchComputers();
         public void getGroups() => searchGroups();

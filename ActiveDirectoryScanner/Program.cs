@@ -8,15 +8,15 @@ using ActiveDirectoryScanner.database.interfaces;
 
 Console.WriteLine("Forestall AD Scanner\n");
 
-//eski yapı
 {
     string uri = "LDAP://" + GetValue("LDAP uri: ");
     string user = GetValue("username: ");
     string pass = GetValue("password: ");
-
+    ;
     try
     {
-        IActiveDirectory activeDirectory = new ActiveDirectory(uri, user, pass);
+        //LDAP uri,user,pass ve kaydedilecek db belirtiliyor.
+        IActiveDirectory activeDirectory = new ActiveDirectory(uri, user, pass, MyNeo4jClient.getmyNeo4JClient());
 
         //İlk gruplar taranıyor. Gruplar kaydedilince, userlar ve computerlar kaydedilirken relation kuruluyor.
         activeDirectory.getGroups();

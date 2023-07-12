@@ -6,14 +6,21 @@ namespace ActiveDirectoryScanner.database
 {
     public class MyNeo4j : IDatabase
     {
+        private static MyNeo4j myNeo4J;
         private readonly IDriver _driver;
         private readonly string uri = "bolt://localhost:7687";
         private readonly string user = "neo4j";
         private readonly string password = "password";
 
-        public MyNeo4j()
+        private MyNeo4j()
         {
             _driver = GraphDatabase.Driver(this.uri, AuthTokens.Basic(this.user, this.password));
+        }
+        //signleton design
+        public MyNeo4j GetMyNeo4J()
+        {
+            if (myNeo4J == null) myNeo4J = new MyNeo4j();
+            return myNeo4J;
         }
 
 
