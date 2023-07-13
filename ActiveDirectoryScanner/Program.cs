@@ -8,24 +8,28 @@ using ActiveDirectoryScanner.database.interfaces;
 
 Console.WriteLine("Forestall AD Scanner\n");
 
-{
-    string uri = "LDAP://" + GetValue("LDAP uri: ");
-    string user = GetValue("username: ");
-    string pass = GetValue("password: ");
-    ;
-    try
-    {
-        //LDAP uri,user,pass ve kaydedilecek db belirtiliyor.
-        IActiveDirectory activeDirectory = new ActiveDirectory(uri, user, pass, MyNeo4jClient.getmyNeo4JClient());
+//LDAP credentials
+string lUri = "LDAP://" + GetValue("LDAP uri: ");
+string lUser = GetValue("username: ");
+string lPass = GetValue("password: ");
 
-        //İlk gruplar taranıyor. Gruplar kaydedilince, userlar ve computerlar kaydedilirken relation kuruluyor.
-        activeDirectory.getGroups();
-        activeDirectory.getUsers();
-        activeDirectory.getComputers();
-    }
-    catch (DirectoryServicesCOMException) { Console.WriteLine("kullanıcı adı veya parola hatalı.."); }
-    catch (COMException) { Console.WriteLine("sunucu bulunamadı.."); }
+//neo4j credentials
+string nUri = "bolt://localhost:7687";
+string nUser = "neo4j";
+string nPass = "password";
+try
+{
+    //LDAP uri,user,pass ve kaydedilecek db belirtiliyor.
+    IActiveDirectory activeDirectory = new ActiveDirectory(lUri, lUser, lPass, MyNeo4jClient.getmyNeo4JClient(nUri, nUser, nPass));
+
+    //İlk gruplar taranıyor. Gruplar kaydedilince, userlar ve computerlar kaydedilirken relation kuruluyor.
+    activeDirectory.getGroups();
+    activeDirectory.getUsers();
+    activeDirectory.getComputers();
 }
+catch (DirectoryServicesCOMException) { Console.WriteLine("kullanıcı adı veya parola hatalı.."); }
+catch (COMException) { Console.WriteLine("sunucu bulunamadı.."); }
+
 
 //test kayıt yapısı
 //{
@@ -48,6 +52,8 @@ Console.WriteLine("Forestall AD Scanner\n");
 //    db.saveComputer(computer1);
 //}
 Console.WriteLine("\nAd scanner is done...");
+Console.WriteLine("press any key for close the window...");
+Console.ReadLine();
 
 string GetValue(string message)
 {
