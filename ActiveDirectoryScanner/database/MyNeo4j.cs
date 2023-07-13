@@ -96,7 +96,7 @@ namespace ActiveDirectoryScanner.database
                 {
                     objectSid = computer.objectSid,
                     distinguishedName = computer.distinguishedName,
-                    operatingSystem = computer.OperatingSystem,
+                    operatingSystem = computer.operatingSystem,
                     whenCreated = computer.whenCreated.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
                     securityDescriptor = computer.securityDescriptor
                 };

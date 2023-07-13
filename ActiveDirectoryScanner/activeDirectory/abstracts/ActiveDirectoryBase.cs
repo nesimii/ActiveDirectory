@@ -143,7 +143,7 @@ namespace ActiveDirectoryScanner.activeDirectory.abstracts
                 Computer computer = new Computer();
                 computer.objectSid = objectId;
                 computer.distinguishedName = distinguishedName;
-                computer.OperatingSystem = OperatingSystem;
+                computer.operatingSystem = OperatingSystem;
                 computer.securityDescriptor = securityDescriptorString;
                 computer.whenCreated = whenCreatedUtc;
 
